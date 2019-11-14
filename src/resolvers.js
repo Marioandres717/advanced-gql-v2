@@ -1,5 +1,10 @@
 const { authenticated, authorized } = require('./auth');
-const { PubSub } = require('apollo-server');
+const {
+  PubSub,
+  AuthenticationError,
+  UserInputError,
+  ApolloError,
+} = require('apollo-server');
 const { withFilter } = require('graphql-subscriptions');
 const NEW_POST = 'NEW_POST';
 const pubsub = new PubSub();
@@ -57,9 +62,8 @@ module.exports = {
 
     signup(_, { input }, { models, createToken }) {
       const existing = models.User.findOne({ email: input.email });
-      console.log('input', input);
       if (existing) {
-        throw new Error('nope');
+        throw new ApolloError('💩');
       }
       const user = models.User.createOne({
         ...input,
@@ -73,7 +77,7 @@ module.exports = {
       const user = models.User.findOne(input);
 
       if (!user) {
-        throw new Error('nope');
+        throw new AuthenticationError('💩');
       }
 
       const token = createToken(user);
@@ -93,7 +97,7 @@ module.exports = {
   User: {
     posts(root, _, { user, models }) {
       if (root.id !== user.id) {
-        throw new Error('nope');
+        throw new ApolloError('💩');
       }
 
       return models.Post.findMany({ author: root.id });

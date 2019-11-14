@@ -21,6 +21,7 @@ module.exports = gql`
     posts: [Post]!
     role: Role!
     settings: Settings!
+    error: String! @deprecated(reason: "case I SAID SO")
   }
 
   type AuthUser {

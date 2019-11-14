@@ -1,6 +1,8 @@
 const { authenticated, authorized } = require('./auth');
+const { PubSub } = require('apollo-server');
+const { withFilter } = require('graphql-subscriptions');
 const NEW_POST = 'NEW_POST';
-
+const pubsub = new PubSub();
 /**
  * Anything Query / Mutation resolver
  * using a user for a DB query
@@ -9,7 +11,6 @@ const NEW_POST = 'NEW_POST';
 module.exports = {
   Query: {
     me: authenticated((_, __, { user }) => {
-      console.log('USER', user);
       return user;
     }),
     posts: authenticated((_, __, { user, models }) => {
@@ -77,6 +78,16 @@ module.exports = {
 
       const token = createToken(user);
       return { token, user };
+    },
+  },
+  Subscription: {
+    newPost: {
+      // subscribe: withFilter(
+      //   () => pubsub.asyncIterator(NEW_POST),
+      //   // filter function for subscription
+      //   (payload, variables) => payload.newPost.message.length > 5
+      // ),
+      subscribe: () => pubsub.asyncIterator(NEW_POST),
     },
   },
   User: {

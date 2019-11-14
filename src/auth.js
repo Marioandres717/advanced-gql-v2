@@ -31,7 +31,6 @@ const getUserFromToken = (token) => {
  */
 const authenticated = (next) => (root, args, context, info) => {
   const { user } = context;
-  console.log('auth', user);
   if (!user) {
     throw Error('NOT AUTHENTICATED');
   }

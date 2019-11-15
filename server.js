@@ -1,14 +1,48 @@
 const gql = require('graphql-tag');
-const { ApolloServer, PubSub } = require('apollo-server');
-
+const {
+  ApolloServer,
+  PubSub,
+  AuthenticationError,
+  UserInputError,
+  ApolloError,
+  SchemaDirectiveVisitor,
+} = require('apollo-server');
+const { defaultFieldResolver, GraphQLString } = require('graphql');
 const pubsub = new PubSub();
 const NEW_ITEM = 'NEW ITEM';
 
+class LogDirective extends SchemaDirectiveVisitor {
+  visitFieldDefinition(field) {
+    const resolver = field.resolve || defaultFieldResolver;
+
+    // passing arguments to directive
+    field.args.push({
+      type: GraphQLString,
+      name: 'message',
+    });
+
+    // arguments from directive
+    field.resolve = (root, { message, ...rest }, ctx, info) => {
+      const { message: schemaMessage } = this.args;
+      console.log('🌩 hello ', message || schemaMessage);
+      return resolver.apply(this, root, rest, ctx, info);
+    };
+
+    // field.type = GraphQLString // changing type of a field from directive
+  }
+  visitedType() {
+    throw new Apollo('💩 not implemented 🐷 💓');
+  }
+}
+
 const typeDefs = gql`
+  directive @log(message: String = "my meesage") on FIELD_DEFINITION
+
   type User {
-    id: ID!
+    id: ID! @log(message: "ID HERE")
     username: String
     createdAt: Int!
+    error: String! @deprecated(reason: "IT HAPPENS")
   }
 
   type Item {
@@ -99,6 +133,9 @@ const server = new ApolloServer({
     onConnect(connectionParams) {
       // handle auth here
     },
+  },
+  schemaDirectives: {
+    log: LogDirective,
   },
 });
 
